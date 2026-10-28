@@ -12,37 +12,55 @@ const rooms = [
 ];
 const inventory = Array.from({length:12},(_,i)=>({id:String(i+1).padStart(2,'0'),status:[1,4,5,8,10].includes(i)?'Terisi':'Kosong'}));
 function Box({position, size, color, ...props}){return <mesh position={position} castShadow receiveShadow {...props}><boxGeometry args={size}/><meshStandardMaterial color={color}/></mesh>}
+function Door({position, side=false}){
+ return <group position={position} rotation={[0,side ? Math.PI/2 : 0,0]}>
+  <Box position={[0,.62,.015]} size={[.49,1.24,.06]} color="#ae7958"/>
+  <Box position={[0,.62,.055]} size={[.38,1.12,.03]} color="#c18c68"/>
+  <Box position={[.14,.59,.08]} size={[.04,.06,.03]} color="#e5d3a1"/>
+  <Box position={[0,1.29,.02]} size={[.57,.08,.08]} color="#f7f6ed"/>
+  <Box position={[0,1.49,.02]} size={[.52,.2,.04]} color="#98b5a6"/>
+ </group>
+}
 function House({rotationTarget, reduced}){
  const group=useRef();
  useFrame((_,delta)=>{if(group.current){if(!rotationTarget.current.dragging&&!reduced) rotationTarget.current.y+=delta*.16; group.current.rotation.y += (rotationTarget.current.y-group.current.rotation.y)*Math.min(1,delta*8)}});
- return <group ref={group} rotation={[0,0,0]} position={[0,-.5,0]}>
-  <Box position={[0,-.12,0]} size={[4.7,.22,3.8]} color="#bdcba9"/>
-  <Box position={[0,1,0]} size={[3.25,2.1,2.45]} color="#f6f5eb"/>
-  <Box position={[0,2.13,0]} size={[3.5,.22,2.7]} color="#536e57"/>
-  <Box position={[-.8,2.55,.18]} size={[1.65,.78,1.6]} color="#f6f5eb"/>
-  <Box position={[-.8,3,.18]} size={[1.85,.16,1.8]} color="#536e57"/>
-  <Box position={[-.83,2.55,1]} size={[1.02,.46,.04]} color="#759285"/>
-  <Box position={[-.82,1.1,1.24]} size={[1.02,1.14,.04]} color="#78988d"/>
-  <Box position={[-.82,1.1,1.27]} size={[.04,1.14,.04]} color="#f8f7ed"/>
-  <Box position={[.58,.77,1.24]} size={[.67,1.52,.05]} color="#b28261"/>
-  <Box position={[.94,.78,1.29]} size={[.06,1.62,.08]} color="#e5ddd0"/>
-  <Box position={[1.63,1.1,.2]} size={[.04,1.05,1.05]} color="#78988d"/>
-  <Box position={[.6,-.015,1.65]} size={[1.1,.05,.8]} color="#e3ded0"/>
-  <Box position={[-1.62,.35,-.62]} size={[.2,.7,.2]} color="#896d53"/>
-  <mesh position={[-1.62,1.05,-.62]} castShadow><sphereGeometry args={[.6,9,7]}/><meshStandardMaterial color="#a5ba7c"/></mesh>
-  <Box position={[1.85,.25,-1.12]} size={[.14,.5,.14]} color="#896d53"/>
-  <mesh position={[1.85,.72,-1.12]} castShadow><sphereGeometry args={[.46,9,7]}/><meshStandardMaterial color="#d1c484"/></mesh>
-  <Box position={[-1.8,.12,1.3]} size={[.4,.23,.4]} color="#c4a485"/>
-  <mesh position={[-1.8,.42,1.3]}><sphereGeometry args={[.28,8,6]}/><meshStandardMaterial color="#789b6f"/></mesh>
+ const steps=Array.from({length:10},(_,i)=>({z:2.25-i*.29,y:.12+i*.22}));
+ return <group ref={group} position={[0,-.8,0]}>
+  {/* Two wings meet around an open courtyard to form the L-shaped building. */}
+  <Box position={[0,-.13,0]} size={[6.8,.24,6.1]} color="#bdcba9"/>
+  <Box position={[0,.015,.25]} size={[4.45,.05,4.25]} color="#dce1ce"/>
+  <Box position={[0,1,-1.78]} size={[5.05,2,1.55]} color="#f6f5eb"/>
+  <Box position={[-1.75,1,.22]} size={[1.55,2,2.5]} color="#f2f2e7"/>
+  <Box position={[0,2.04,-1.78]} size={[5.27,.15,1.78]} color="#65806a"/>
+  <Box position={[-1.75,2.04,.22]} size={[1.78,.15,2.55]} color="#65806a"/>
+  {/* Three doors on each side of the courtyard, six on the ground floor. */}
+  {[-.95,0,1.03].map(x=><Door key={'back'+x} position={[x,0,-.985]}/>)}
+  {[-.32,.44,1.2].map(z=><Door key={'side'+z} position={[-.96,0,z]} side/>)}
+  <Box position={[1.05,2.82,-1.83]} size={[1.85,1.5,1.42]} color="#f8f7ee"/>
+  <Box position={[1.05,3.62,-1.83]} size={[2.05,.16,1.62]} color="#536f59"/>
+  <Door position={[1.05,2.08,-1.105]}/>
+  {/* Landing and a complete external stair flight connect to the upper door. */}
+  <Box position={[1.63,2.1,-.82]} size={[1.95,.16,.7]} color="#d8d8c8"/>
+  {steps.map((step,i)=><Box key={i} position={[2.48,step.y,step.z]} size={[.64,.22,.31]} color="#d7d8c8"/>)}
+  <Box position={[2.48,2.22,-.55]} size={[.68,.16,.6]} color="#d7d8c8"/>
+  <Box position={[.7,2.51,-.48]} size={[.08,.75,.08]} color="#6e8a71"/>
+  <Box position={[1.88,2.51,-.48]} size={[.08,.75,.08]} color="#6e8a71"/>
+  <Box position={[1.29,2.85,-.48]} size={[1.25,.07,.07]} color="#6e8a71"/>
+  <Box position={[2.84,1.65,.87]} size={[.06,.06,3.78]} rotation={[.65,0,0]} color="#6e8a71"/>
+  {[0,3,6,9].map(i=><Box key={'rail'+i} position={[2.84,steps[i].y+.4,steps[i].z]} size={[.06,.8,.06]} color="#6e8a71"/>)}
+  <Box position={[-2.75,.28,2.15]} size={[.15,.55,.15]} color="#896d53"/>
+  <mesh position={[-2.75,.83,2.15]} castShadow><sphereGeometry args={[.45,9,7]}/><meshStandardMaterial color="#9eb77d"/></mesh>
+  <Box position={[1.55,.13,1.8]} size={[.4,.25,.4]} color="#c4a485"/>
+  <mesh position={[1.55,.44,1.8]}><sphereGeometry args={[.29,8,6]}/><meshStandardMaterial color="#789b6f"/></mesh>
  </group>
 }
 class HouseBoundary extends React.Component {constructor(p){super(p);this.state={failed:false}} static getDerivedStateFromError(){return {failed:true}} render(){return this.state.failed?<div className="house-fallback"><Home size={110}/><span>RumahIjo</span></div>:this.props.children}}
-function HouseViewer(){const target=useRef({y:-.65,dragging:false}); const last=useRef(0); const velocity=useRef(0); const [reduced,setReduced]=useState(false);
+function HouseViewer(){const target=useRef({y:0,dragging:false}); const last=useRef(0); const velocity=useRef(0); const [reduced,setReduced]=useState(false);
  useEffect(()=>{const m=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReduced(m.matches);update();m.addEventListener('change',update);return()=>m.removeEventListener('change',update)},[]);
  function down(e){e.currentTarget.setPointerCapture(e.pointerId);target.current.dragging=true;last.current=e.clientX;velocity.current=0;gsap.killTweensOf(target.current)}
  function move(e){if(!target.current.dragging)return;let dx=e.clientX-last.current;last.current=e.clientX;velocity.current=dx*.012;target.current.y+=velocity.current}
  function up(){if(!target.current.dragging)return;target.current.dragging=false;gsap.to(target.current,{y:target.current.y+velocity.current*8,duration:1.1,ease:'power3.out'})}
- return <div className="viewer" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Ilustrasi rumah tiga dimensi, geser untuk memutar"><HouseBoundary><Canvas shadows dpr={[1,1.5]} camera={{position:[8,7,9],fov:38}} gl={{antialias:true,alpha:true}}><ambientLight intensity={1.8}/><directionalLight position={[5,9,5]} intensity={2.4} castShadow/><Suspense fallback={null}><House rotationTarget={target} reduced={reduced}/></Suspense></Canvas></HouseBoundary></div>
+ return <div className="viewer" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Ilustrasi rumah kost berbentuk L dengan enam pintu di bawah, satu pintu di atas, dan tangga luar. Geser untuk memutar"><HouseBoundary><Canvas shadows dpr={[1,1.5]} camera={{position:[8,7,9],fov:38}} gl={{antialias:true,alpha:true}}><ambientLight intensity={1.8}/><directionalLight position={[5,9,5]} intensity={2.4} castShadow/><Suspense fallback={null}><House rotationTarget={target} reduced={reduced}/></Suspense></Canvas></HouseBoundary></div>
 }
 function App(){const [nav,setNav]=useState(false),[active,setActive]=useState('kostku'),[filter,setFilter]=useState('Semua'),[roomFilter,setRoomFilter]=useState('Semua'),[message,setMessage]=useState(''),[toast,setToast]=useState('');
  useEffect(()=>{let observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)setActive(e.target.id)}),{rootMargin:'-25% 0px -60% 0px'});document.querySelectorAll('main section[id]').forEach(s=>observer.observe(s));return()=>observer.disconnect()},[]);
