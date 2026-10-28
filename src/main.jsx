@@ -1,7 +1,8 @@
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { gsap } from 'gsap';
+import * as THREE from 'three';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Check, ChevronDown, Home, Menu as MenuIcon, X, MoveHorizontal, MessageCircle, Leaf, Wifi, Wind, Droplets } from 'lucide-react';
 import './style.css';
 
@@ -21,37 +22,59 @@ function Door({position, side=false}){
   <Box position={[0,1.49,.02]} size={[.52,.2,.04]} color="#98b5a6"/>
  </group>
 }
+function HouseSign(){
+ const texture=useMemo(()=>{
+  const canvas=document.createElement('canvas'); canvas.width=1024; canvas.height=256;
+  const ctx=canvas.getContext('2d'); ctx.fillStyle='#f5f5eb';ctx.fillRect(0,0,1024,256);
+  ctx.fillStyle='#315b3d';ctx.font='bold 145px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('RumahIjo',512,132);
+  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;return map;
+ },[]);
+ useEffect(()=>()=>texture.dispose(),[texture]);
+ return <mesh position={[-.45,1.08,-1.285]}><planeGeometry args={[1.02,.255]}/><meshBasicMaterial map={texture}/></mesh>
+}
+function TiledRoof(){
+ return <group position={[1.7,3.62,-2.1]}>
+  {/* Two sloping tiled planes meet at the ridge. */}
+  {[-1,1].map(side=><group key={side} position={[side*.55,.29,0]} rotation={[0,0,-side*.48]}>
+   <Box position={[0,0,0]} size={[1.27,.12,1.9]} color="#708c6d"/>
+   {Array.from({length:9},(_,i)=><Box key={i} position={[0,.075,-.8+i*.2]} size={[1.27,.045,.04]} color="#4e7054"/>)}
+   {[-.35,0,.35].map(x=><Box key={x} position={[x,.078,0]} size={[.025,.025,1.86]} color="#83a081"/>)}
+  </group>)}
+  <Box position={[0,.6,0]} size={[.12,.12,1.98]} color="#4a6a50"/>
+ </group>
+}
 function House({rotationTarget, reduced}){
  const group=useRef();
- useFrame((_,delta)=>{if(group.current){if(!rotationTarget.current.dragging&&!reduced) rotationTarget.current.y+=delta*.16; group.current.rotation.y += (rotationTarget.current.y-group.current.rotation.y)*Math.min(1,delta*8)}});
- const steps=Array.from({length:10},(_,i)=>({z:2.25-i*.29,y:.12+i*.22}));
- return <group ref={group} position={[0,-.8,0]}>
-  {/* Two wings meet around an open courtyard to form the L-shaped building. */}
-  <Box position={[0,-.13,0]} size={[6.8,.24,6.1]} color="#bdcba9"/>
-  <Box position={[0,.015,.25]} size={[4.45,.05,4.25]} color="#dce1ce"/>
-  <Box position={[0,1,-1.78]} size={[5.05,2,1.55]} color="#f6f5eb"/>
-  <Box position={[-1.75,1,.22]} size={[1.55,2,2.5]} color="#f2f2e7"/>
-  <Box position={[0,2.04,-1.78]} size={[5.27,.15,1.78]} color="#65806a"/>
-  <Box position={[-1.75,2.04,.22]} size={[1.78,.15,2.55]} color="#65806a"/>
-  {/* Three doors on each side of the courtyard, six on the ground floor. */}
-  {[-.95,0,1.03].map(x=><Door key={'back'+x} position={[x,0,-.985]}/>)}
-  {[-.32,.44,1.2].map(z=><Door key={'side'+z} position={[-.96,0,z]} side/>)}
-  <Box position={[1.05,2.82,-1.83]} size={[1.85,1.5,1.42]} color="#f8f7ee"/>
-  <Box position={[1.05,3.62,-1.83]} size={[2.05,.16,1.62]} color="#536f59"/>
-  <Door position={[1.05,2.08,-1.105]}/>
-  {/* Landing and a complete external stair flight connect to the upper door. */}
-  <Box position={[1.63,2.1,-.82]} size={[1.95,.16,.7]} color="#d8d8c8"/>
-  {steps.map((step,i)=><Box key={i} position={[2.48,step.y,step.z]} size={[.64,.22,.31]} color="#d7d8c8"/>)}
-  <Box position={[2.48,2.22,-.55]} size={[.68,.16,.6]} color="#d7d8c8"/>
-  <Box position={[.7,2.51,-.48]} size={[.08,.75,.08]} color="#6e8a71"/>
-  <Box position={[1.88,2.51,-.48]} size={[.08,.75,.08]} color="#6e8a71"/>
-  <Box position={[1.29,2.85,-.48]} size={[1.25,.07,.07]} color="#6e8a71"/>
-  <Box position={[2.84,1.65,.87]} size={[.06,.06,3.78]} rotation={[.65,0,0]} color="#6e8a71"/>
-  {[0,3,6,9].map(i=><Box key={'rail'+i} position={[2.84,steps[i].y+.4,steps[i].z]} size={[.06,.8,.06]} color="#6e8a71"/>)}
-  <Box position={[-2.75,.28,2.15]} size={[.15,.55,.15]} color="#896d53"/>
-  <mesh position={[-2.75,.83,2.15]} castShadow><sphereGeometry args={[.45,9,7]}/><meshStandardMaterial color="#9eb77d"/></mesh>
-  <Box position={[1.55,.13,1.8]} size={[.4,.25,.4]} color="#c4a485"/>
-  <mesh position={[1.55,.44,1.8]}><sphereGeometry args={[.29,8,6]}/><meshStandardMaterial color="#789b6f"/></mesh>
+ useFrame((_,delta)=>{if(group.current){if(!rotationTarget.current.dragging&&!reduced) rotationTarget.current.y+=delta*.12; group.current.rotation.y += (rotationTarget.current.y-group.current.rotation.y)*Math.min(1,delta*8)}});
+ const steps=Array.from({length:10},(_,i)=>({z:2.55-i*.29,y:.12+i*.22}));
+ return <group ref={group} position={[0,-.7,0]}>
+  {/* The long, separate wings form an L around a courtyard. */}
+  <Box position={[0,-.13,0]} size={[8.5,.24,7.2]} color="#bdcba9"/>
+  <Box position={[0,.015,.2]} size={[6.4,.05,5.5]} color="#dce1ce"/>
+  <Box position={[0,1,-2.1]} size={[6.9,2,1.55]} color="#f6f5eb"/>
+  <Box position={[-2.675,1,.43]} size={[1.55,2,3.5]} color="#f2f2e7"/>
+  <Box position={[0,2.04,-2.1]} size={[7.1,.15,1.78]} color="#65806a"/>
+  <Box position={[-2.675,2.04,.43]} size={[1.78,.15,3.65]} color="#65806a"/>
+  {/* Doors sit slightly in front of the inner wall surfaces, with space between them. */}
+  {[-1.3,.4,2.1].map(x=><Door key={'back'+x} position={[x,0,-1.29]}/>)}
+  {[-.55,.6,1.72].map(z=><Door key={'side'+z} position={[-1.87,0,z]} side/>)}
+  <HouseSign/>
+  <Box position={[1.7,2.82,-2.1]} size={[1.85,1.5,1.42]} color="#f8f7ee"/>
+  <Door position={[1.7,2.08,-1.355]}/>
+  <TiledRoof/>
+  {/* The exterior staircase reaches a landing in front of the upper door. */}
+  <Box position={[2.25,2.1,-1.06]} size={[1.95,.16,.72]} color="#d8d8c8"/>
+  {steps.map((step,i)=><Box key={i} position={[3.13,step.y,step.z]} size={[.64,.22,.31]} color="#d7d8c8"/>)}
+  <Box position={[3.13,2.22,-.38]} size={[.68,.16,1.05]} color="#d7d8c8"/>
+  <Box position={[1.32,2.51,-.69]} size={[.08,.75,.08]} color="#6e8a71"/>
+  <Box position={[2.48,2.51,-.69]} size={[.08,.75,.08]} color="#6e8a71"/>
+  <Box position={[1.9,2.85,-.69]} size={[1.24,.07,.07]} color="#6e8a71"/>
+  <Box position={[3.49,1.62,1.24]} size={[.06,.06,3.48]} rotation={[.65,0,0]} color="#6e8a71"/>
+  {[0,3,6,9].map(i=><Box key={'rail'+i} position={[3.49,steps[i].y+.4,steps[i].z]} size={[.06,.8,.06]} color="#6e8a71"/>)}
+  <Box position={[-3.65,.28,2.65]} size={[.15,.55,.15]} color="#896d53"/>
+  <mesh position={[-3.65,.83,2.65]} castShadow><sphereGeometry args={[.45,9,7]}/><meshStandardMaterial color="#9eb77d"/></mesh>
+  <Box position={[1.3,.13,2.25]} size={[.4,.25,.4]} color="#c4a485"/>
+  <mesh position={[1.3,.44,2.25]}><sphereGeometry args={[.29,8,6]}/><meshStandardMaterial color="#789b6f"/></mesh>
  </group>
 }
 class HouseBoundary extends React.Component {constructor(p){super(p);this.state={failed:false}} static getDerivedStateFromError(){return {failed:true}} render(){return this.state.failed?<div className="house-fallback"><Home size={110}/><span>RumahIjo</span></div>:this.props.children}}
@@ -60,7 +83,7 @@ function HouseViewer(){const target=useRef({y:0,dragging:false}); const last=use
  function down(e){e.currentTarget.setPointerCapture(e.pointerId);target.current.dragging=true;last.current=e.clientX;velocity.current=0;gsap.killTweensOf(target.current)}
  function move(e){if(!target.current.dragging)return;let dx=e.clientX-last.current;last.current=e.clientX;velocity.current=dx*.012;target.current.y+=velocity.current}
  function up(){if(!target.current.dragging)return;target.current.dragging=false;gsap.to(target.current,{y:target.current.y+velocity.current*8,duration:1.1,ease:'power3.out'})}
- return <div className="viewer" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Ilustrasi rumah kost berbentuk L dengan enam pintu di bawah, satu pintu di atas, dan tangga luar. Geser untuk memutar"><HouseBoundary><Canvas shadows dpr={[1,1.5]} camera={{position:[8,7,9],fov:38}} gl={{antialias:true,alpha:true}}><ambientLight intensity={1.8}/><directionalLight position={[5,9,5]} intensity={2.4} castShadow/><Suspense fallback={null}><House rotationTarget={target} reduced={reduced}/></Suspense></Canvas></HouseBoundary></div>
+ return <div className="viewer" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} role="img" aria-label="Ilustrasi rumah kost berbentuk L dengan enam pintu di bawah, satu pintu di atas, dan tangga luar. Geser untuk memutar"><HouseBoundary><Canvas shadows dpr={[1,1.5]} camera={{position:[10,9,11],fov:38}} gl={{antialias:true,alpha:true}}><ambientLight intensity={1.8}/><directionalLight position={[5,9,5]} intensity={2.4} castShadow/><Suspense fallback={null}><House rotationTarget={target} reduced={reduced}/></Suspense></Canvas></HouseBoundary></div>
 }
 function App(){const [nav,setNav]=useState(false),[active,setActive]=useState('kostku'),[filter,setFilter]=useState('Semua'),[roomFilter,setRoomFilter]=useState('Semua'),[message,setMessage]=useState(''),[toast,setToast]=useState('');
  useEffect(()=>{let observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)setActive(e.target.id)}),{rootMargin:'-25% 0px -60% 0px'});document.querySelectorAll('main section[id]').forEach(s=>observer.observe(s));return()=>observer.disconnect()},[]);
