@@ -125,7 +125,7 @@ function ScrollIntroductions(){
    const selector=['main section h1','main section h2','main section > p','.eyebrow','.hero-copy > p','.hero-copy > .primary','.hero-bottom','.visual-heading','.section-label','.mini-heading','.section-top > p','.menu-intro > p','.section-row .filters','.property-card','.plan','.availability-head > div','.room-toolbar','.room','.room-hint','.contact-copy > p','.contact-details > div','.contact-form','.footer-top > div','.footer-location .location-head','.footer-location iframe','.footer-bottom'].join(',');
    const targets=gsap.utils.toArray(selector);const triggers=targets.map((el)=>{
     let tween;const reset=()=>{if(tween)tween.kill();gsap.set(el,{clearProps:'opacity,transform,visibility'})};
-    return ScrollTrigger.create({trigger:el,start:'top 92%',onEnter:()=>{const siblings=el.parentElement;const i=siblings?Array.from(siblings.children).indexOf(el):0;tween=gsap.fromTo(el,{opacity:0,y:28},{opacity:1,y:0,duration:.7,delay:Math.min(i%6*.07,.28),ease:'power2.out',overwrite:true,onComplete:()=>gsap.set(el,{clearProps:'opacity,transform,visibility'})})},onEnterBack:reset,onLeaveBack:reset});
+    return ScrollTrigger.create({trigger:el,start:'top 92%',onEnter:()=>{const siblings=el.parentElement;const i=siblings?Array.from(siblings.children).indexOf(el):0;tween=gsap.fromTo(el,{opacity:0,y:28},{opacity:1,y:0,duration:1.2,delay:Math.min(i%6*.14,.56),ease:'power2.out',overwrite:true,onComplete:()=>gsap.set(el,{clearProps:'opacity,transform,visibility'})})},onEnterBack:reset,onLeaveBack:reset});
    });return ()=>{triggers.forEach(t=>t.kill());targets.forEach(el=>gsap.set(el,{clearProps:'opacity,transform,visibility'}))};
   });return ()=>media.revert();
  },[]);return null;
