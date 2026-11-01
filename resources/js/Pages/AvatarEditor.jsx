@@ -1,0 +1,7 @@
+import React, {useEffect, useState} from 'react';
+import {useForm} from '@inertiajs/react';
+export default function AvatarEditor({user}) {
+ const form=useForm({avatar:null});const [preview,setPreview]=useState(null);
+ useEffect(()=>{if(!form.data.avatar){setPreview(null);return;}const url=URL.createObjectURL(form.data.avatar);setPreview(url);return()=>URL.revokeObjectURL(url);},[form.data.avatar]);
+ return <section className="panel avatar-editor"><small>FOTO PROFIL</small><div className="avatar-editor-body"><span className="avatar avatar-large">{preview||user.avatar_url?<img src={preview||user.avatar_url} alt="Foto profil"/>:user.name.charAt(0)}</span><div><h2>Halo, {user.name.split(' ')[0]}</h2><p>JPG, PNG, atau WebP. Maksimal 2 MB.</p></div></div><form onSubmit={e=>{e.preventDefault();form.post('/penyewa/pengaturan/foto',{forceFormData:true,preserveScroll:true,onSuccess:()=>form.reset()})}}><label className="field">Pilih foto<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>form.setData('avatar',e.target.files[0]||null)} required/></label>{form.errors.avatar&&<p className="error" role="alert">{form.errors.avatar}</p>}<button className="primary-action" disabled={form.processing||!form.data.avatar}>{form.processing?'Mengunggah...':'Simpan foto profil'}</button>{form.recentlySuccessful&&<p className="success">Foto profil tersimpan.</p>}</form></section>;
+}
