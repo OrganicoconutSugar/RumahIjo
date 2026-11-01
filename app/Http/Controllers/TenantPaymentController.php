@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\DynamicQris;
 use App\Services\PortalActivity;
 use App\Services\TenantBilling;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use InvalidArgumentException;
 
 class TenantPaymentController extends Controller
 {
@@ -22,12 +24,28 @@ class TenantPaymentController extends Controller
         Gate::authorize('view', $invoice);
         $payments = Payment::where('invoice_id', $invoice->id)->latest('id')->get()->map(fn ($p) => ['id' => $p->id, 'order_id' => $p->order_id, 'status' => $p->status, 'gross_amount' => $p->gross_amount, 'is_simulation' => $p->is_simulation, 'payment_type' => $p->payment_type, 'created_at' => $p->created_at->toIso8601String(), 'review_note' => $p->review_note, 'proof_url' => $p->proof_path ? URL::temporarySignedRoute('tenant.payment.proof', now()->addMinutes(10), ['payment' => $p->id]) : null]);
 
-        return Inertia::render('PaymentDetail', ['invoice' => $invoice, 'payments' => $payments, 'qris' => ['image' => config('portal.qris_image'), 'merchant' => config('portal.qris_merchant')], 'simulation' => app()->environment('local', 'testing') && config('portal.simulation_enabled')]);
+        return Inertia::render('PaymentDetail', ['invoice' => $invoice, 'payments' => $payments, 'qris' => ['image' => config('portal.qris_image'), 'merchant' => config('portal.qris_merchant'), 'payload' => $this->qrisPayload($invoice)], 'simulation' => app()->environment('local', 'testing') && config('portal.simulation_enabled')]);
+    }
+
+    private function qrisPayload(Invoice $invoice): ?string
+    {
+        $static = config('portal.qris_payload');
+        if (! $static || in_array($invoice->status, ['paid', 'cancelled'])) {
+            return null;
+        }
+        try {
+            return DynamicQris::forAmount($static, $invoice->amount);
+        } catch (InvalidArgumentException $e) {
+            report($e);
+
+            return null;
+        }
     }
 
     public function submit(Request $request, Invoice $invoice)
     {
         Gate::authorize('update', $invoice);
+        $request->merge(['payment_reference' => Str::upper($request->string('payment_reference')->trim()->toString())]);
         $request->validate(['proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:3072', 'paid_amount' => 'required|integer|in:'.$invoice->amount, 'payment_reference' => 'required|string|max:100', 'acknowledge' => 'accepted']);
         DB::transaction(function () use ($request, $invoice) {
             $item = Invoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail();
@@ -36,6 +54,9 @@ class TenantPaymentController extends Controller
             }
             if (Payment::where('invoice_id', $item->id)->where('status', 'pending')->exists()) {
                 throw ValidationException::withMessages(['payment' => 'Bukti pembayaran masih menunggu verifikasi.']);
+            }
+            if (Payment::where('transaction_id', $request->string('payment_reference')->toString())->whereIn('status', ['pending', 'paid'])->exists()) {
+                throw ValidationException::withMessages(['payment_reference' => 'Nomor referensi ini sudah dipakai pada pembayaran lain.']);
             }
             $path = $request->file('proof')->store('payment-proofs', 'local');
             try {
