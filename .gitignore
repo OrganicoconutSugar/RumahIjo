@@ -1,3 +1,15 @@
 node_modules/
 dist/
 .DS_Store
+/vendor/
+/.env
+/.env.*
+!/.env.example
+/public/build/
+/public/hot
+/storage/*.key
+/database/*.sqlite
+/public/storage
+/storage/pail
+
+.phpunit.result.cache
