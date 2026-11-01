@@ -1,1 +1,25 @@
-{"name":"rumahijo","version":"1.0.0","type":"module","scripts":{"dev":"vite --host 127.0.0.1","build":"vite build","preview":"vite preview --host 127.0.0.1"},"dependencies":{"@inertiajs/react":"^3.9.1","@react-three/fiber":"^9.4.0","@vitejs/plugin-react":"^5.2.0","gsap":"^3.13.0","laravel-vite-plugin":"^2.1.0","lucide-react":"^0.468.0","react":"^19.2.0","react-dom":"^19.2.0","three":"^0.180.0","vite":"^7.1.0"}}
+{
+  "name": "rumahijo",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test resources/js/Pages/calendar-grid.test.js src/landingData.test.js"
+  },
+  "dependencies": {
+    "@inertiajs/react": "^3.9.1",
+    "@react-three/fiber": "^9.4.0",
+    "gsap": "^3.13.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.2.0",
+    "laravel-vite-plugin": "^2.1.0",
+    "vite": "^7.1.0"
+  }
+}
